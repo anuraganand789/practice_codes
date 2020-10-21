@@ -27,3 +27,4 @@ target/*
 #ignore c files
 *.obj
 *.out
+*.o
