@@ -28,3 +28,6 @@ target/*
 *.obj
 *.out
 *.o
+
+#vim swap files
+*.swp
