@@ -9,5 +9,5 @@ class IntConsumer : Consumer {
 };
 
 int main(){
-    IntConsumer * intConsumer ();
+    class IntConsumer * intConsumer = new class IntConsumer();
 }
