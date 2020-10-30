@@ -1,7 +1,6 @@
 #include<iostream>
 #include<cstdio>
-namespace LL {
-  class LinkedList{
+class LinkedList{
       struct Node{
         int data;
   	struct Node * next;
@@ -108,10 +107,9 @@ namespace LL {
 
   
   };
-}
 
 int main(){
-    LL::LinkedList * linkedList = new LL::LinkedList();
+    LinkedList * linkedList = new LinkedList();
 
     linkedList->add(12);
     linkedList->add(13);
