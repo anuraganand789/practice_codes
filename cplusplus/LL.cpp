@@ -1,5 +1,7 @@
 #include<iostream>
 #include<cstdio>
+#include<cassert>
+
 class LinkedList{
       struct Node{
         int data;
@@ -41,10 +43,10 @@ class LinkedList{
 	  ++mod;
       }
 
-      public: void forEach(void (* consumer)(int)){
+      public: void forEach(void (* consume)(int)){
           struct Node * _head = head;
 	  while(_head){
-	      consumer(_head->data);
+	      consume(_head->data);
 	      _head = _head->next;
 	  }
       }
@@ -104,6 +106,32 @@ class LinkedList{
 	  return false;
       }
 
+      public: void print(){
+          struct Node * curr = head;
+	  while(curr){
+	      printf("%d", curr->data); printf(" -> "); curr = curr->next;
+	  }
+	  printf("NULL.\n");
+      }
+
+      public: void reverse(){
+          struct Node * curr = head;
+	  struct Node * prev = nullptr;
+	  struct Node * next = nullptr;
+          
+	  while(curr){
+	      next = curr->next;
+	      //link to node behind you
+	      curr->next = prev;
+	      prev = curr;
+	      //move the next node
+	      curr = next;
+	      mod++;
+	  }
+
+	  //reset the head
+	  head = prev;
+      }
 
   
   };
@@ -117,14 +145,21 @@ int main(){
     linkedList->add(15);
 
     std::cout << "Linked List Size " << linkedList->size() << std::endl;
-    linkedList->forEach([](int const data) { std::cout << data << std::endl;});
+    auto sizeOfList = linkedList->size();
+    linkedList->print();
+//    linkedList->forEach([](int const data) { std::cout << data << std::endl;});
+    linkedList->reverse();
+    assert( sizeOfList == linkedList->size());
+    //printf("------------------------------------\n");
+    linkedList->print();
+ //   linkedList->forEach([](int const data) { std::cout << data << std::endl;});
 
-    if(linkedList->removeAt(0)) printf("Value at index zero removed\n");
-    if(linkedList->removeAt(2)) printf("Value at index two removed \n");
-    if(linkedList->removeAt(3)) printf("Value at index three removed \n");
+    //if(linkedList->removeAt(0)) printf("Value at index zero removed\n");
+    //if(linkedList->removeAt(2)) printf("Value at index two removed \n");
+    //if(linkedList->removeAt(3)) printf("Value at index three removed \n");
 
-    std::cout << "Linked List Size " << linkedList->size() << std::endl;
-    linkedList->forEach([](int const data) { std::cout << data << std::endl;});
+    //std::cout << "Linked List Size " << linkedList->size() << std::endl;
+    //linkedList->forEach([](int const data) { std::cout << data << std::endl;});
 
 }
 
