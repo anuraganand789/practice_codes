@@ -1,4 +1,5 @@
 #include<iostream>
+#include<cstdio>
 namespace LL {
   class LinkedList{
       struct Node{
@@ -48,6 +49,62 @@ namespace LL {
 	      _head = _head->next;
 	  }
       }
+      
+      public: bool remove(int value){
+          struct Node * curr = head;
+	  struct Node * prev = nullptr;
+
+	  while(curr && curr->data != value){
+	      prev = curr; curr = curr->next;
+	  }
+
+	  if(curr){
+	      //if prev is nullptr that means , the value is at the head of the list
+	      if(!prev) {
+	          head = head->next;
+	      }else {
+	          prev->next = curr->next;
+	      }
+              curr->next = nullptr;
+	      delete curr;
+	      --totalNode;
+	      ++mod;
+              return true;
+	  }
+
+	  //if we are here that means data is not there in the linked list
+	  return false;
+      }
+
+      public: bool removeAt(int const index){
+	  if(index < size()) {
+              struct Node * curr = head;
+	      struct Node * prev = nullptr;
+              int nodeCount = 0; 
+
+	      while(nodeCount < index){
+	          ++nodeCount;
+	          prev = curr;
+	          curr = curr->next;
+	      }
+         
+	      if(!prev){ head = head->next; }
+	      else { prev->next = curr->next; }
+
+	      curr->next = nullptr;
+
+	      delete curr;
+
+	      --totalNode;
+	      ++mod;
+
+	      return true;
+	     }
+
+	  //index does not exist
+	  return false;
+      }
+
 
   
   };
@@ -63,5 +120,13 @@ int main(){
 
     std::cout << "Linked List Size " << linkedList->size() << std::endl;
     linkedList->forEach([](int const data) { std::cout << data << std::endl;});
+
+    if(linkedList->removeAt(0)) printf("Value at index zero removed\n");
+    if(linkedList->removeAt(2)) printf("Value at index two removed \n");
+    if(linkedList->removeAt(3)) printf("Value at index three removed \n");
+
+    std::cout << "Linked List Size " << linkedList->size() << std::endl;
+    linkedList->forEach([](int const data) { std::cout << data << std::endl;});
+
 }
 
