@@ -13,6 +13,11 @@ class LinkedList{
   	    this->data = data;
   	    this->next = next;
   	}
+
+	void print() const {
+	    printf("%d ", this->data);
+	}
+
       };
 
       int mod;
@@ -29,14 +34,14 @@ class LinkedList{
       public: int size() const { return totalNode; }
 
       void addAsLastNode(int const data){
-          struct Node * _tail = tail;
+          struct Node * lastNode = tail;
 
-	  struct Node * newNode = new Node(_tail, data, NULL);
+	  struct Node * newNode = new Node(lastNode, data, NULL);
 	  tail = newNode;
-	  if(!_tail) {
+	  if(!lastNode) {
 	     head = newNode;
 	  } else{
-	      _tail->next = newNode;
+	      lastNode->next = newNode;
 	  }
 
 	  ++totalNode;
@@ -109,7 +114,8 @@ class LinkedList{
       public: void print(){
           struct Node * curr = head;
 	  while(curr){
-	      printf("%d", curr->data); printf(" -> "); curr = curr->next;
+	      printf("%d", curr->data); printf(" -> "); 
+	      curr = curr->next;
 	  }
 	  printf("NULL.\n");
       }
@@ -129,10 +135,30 @@ class LinkedList{
 	      mod++;
 	  }
 
+	  //reset the tail
+	  tail = head;
 	  //reset the head
 	  head = prev;
       }
 
+      public: void rotate(const int rotation){
+	  assert(rotation > -1);
+          struct Node * firstNode = head;	  
+	  struct Node * lastNode  = tail;
+          struct Node * isolatedNode = nullptr;
+	  int noOfRotation = rotation;
+
+	  while(noOfRotation-- > 0){
+	     isolatedNode = firstNode; 
+	     firstNode    = firstNode->next;
+             isolatedNode->next = nullptr;
+	     lastNode->next = isolatedNode; 
+	     lastNode = isolatedNode;
+	  }
+          
+	  head = firstNode;
+	  tail = lastNode;
+      }
   
   };
 
@@ -151,6 +177,8 @@ int main(){
     linkedList->reverse();
     assert( sizeOfList == linkedList->size());
     //printf("------------------------------------\n");
+    linkedList->print();
+    linkedList->rotate(1);
     linkedList->print();
  //   linkedList->forEach([](int const data) { std::cout << data << std::endl;});
 
