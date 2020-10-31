@@ -18,6 +18,8 @@ class LinkedList{
 	    printf("%d ", this->data);
 	}
 
+	~Node() { delete next; delete prev; }
+
       };
 
       int mod;
