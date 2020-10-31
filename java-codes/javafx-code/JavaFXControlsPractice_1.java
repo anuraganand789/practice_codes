@@ -1,9 +1,11 @@
 import java.util.List;
+
 import javafx.application.Application;
+
 import javafx.collections.ObservableList;
 import javafx.collections.FXCollections;
+
 import javafx.stage.Stage;
-import javafx.scene.Scene;
 
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
@@ -17,12 +19,12 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
-
 import javafx.scene.control.TreeView;
-
 import javafx.scene.control.cell.CheckBoxTreeCell;
 
 import javafx.scene.layout.VBox;
+
+import javafx.scene.Scene;
 
 public class JavaFXControlsPractice_1 extends Application{ 
     @Override
