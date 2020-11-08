@@ -5,6 +5,8 @@ import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.StringWriter;
+import java.io.UncheckedIOException;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -27,17 +29,83 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.stream.Collectors;
 import java.util.List;
-
+import java.util.regex.Pattern;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
 public class SocketServer{
+
     private static final String magicKey = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"; 
+
+    private String readRequest(final SocketChannel channel) throws IOException {
+	final StringBuilder request = new StringBuilder();
+        ByteBuffer buffer = ByteBuffer.allocate(512);
+        while (channel.read(buffer) != -1) {
+            // read the complete HTTP request headers, there should be no body
+            CharBuffer decoded;
+            buffer.flip();
+            try {
+                decoded = ISO_8859_1.newDecoder().decode(buffer);
+            } catch (CharacterCodingException e) {
+                throw new UncheckedIOException(e);
+            }
+            request.append(decoded);
+            if (Pattern.compile("\r\n\r\n").matcher(request).find()) return request.toString();
+            buffer.clear();
+        }
+        return request.toString();
+    } 
+
+    private void writeResponse(SocketChannel channel, List<String> response) throws IOException {
+        String s = response.stream().collect(Collectors.joining("\r\n")) + "\r\n\r\n";
+        ByteBuffer encoded;
+        try {
+            encoded = ISO_8859_1.newEncoder().encode(CharBuffer.wrap(s));
+        } catch (CharacterCodingException e) {
+	    e.printStackTrace();
+            throw new UncheckedIOException(e);
+        }
+        
+	final byte[] strData = s.getBytes();
+
+        //while (encoded.hasRemaining()) {
+            String res= "Framedata{ frame-opcode:" + 1 + 
+	                      ", frame-fin:"  + 1 + 
+	                      ", frame-rsv1:" + 0 + 
+			      ", frame-rsv2:" + 0 + 
+	                      ", frame-rsv3:" + 0 + 
+	                      ", frame-payload-length:" + strData.length + 
+	                      "], frame-payload-data:" + s + '}';
+            channel.write(ByteBuffer.wrap(res.getBytes()));
+        //}
+    }
+    private static String readSocketChannel(final SocketChannel socketChannel) throws IOException{
+        StringBuilder requestString = new StringBuilder(100);
+	ByteBuffer buffer = ByteBuffer.allocate(512);
+
+	String strValue;
+	while(socketChannel.read(buffer) > 0){
+	    buffer.flip();
+	    strValue = new String(buffer.array());
+	    buffer.clear();
+	    System.out.print(strValue);
+	    requestString.append(strValue);
+	}
+	buffer.clear();
+	return requestString.toString();
+    }
+
     private class SocketHandler implements Runnable{
 
-	private final Socket socket;
+	private final SocketChannel socketChannel;
 
-	public SocketHandler(final Socket socket){
-	    this.socket = socket;
+	public SocketHandler(final SocketChannel socketChannel){
+	    this.socketChannel = socketChannel;
+	    try{
+	        this.socketChannel.setOption(StandardSocketOptions.TCP_NODELAY, true);
+                this.socketChannel.configureBlocking(false);
+	    }catch(IOException ex){
+	        ex.printStackTrace();
+	    }
 	}
 
         @Override
@@ -49,24 +117,23 @@ public class SocketServer{
 		ex.printStackTrace();
 	        return;
 	    }
-	    try(
-	        final InputStream socketInputStream  = socket.getInputStream();    
-	        final OutputStream socketOutputStream = socket.getOutputStream();    
-	        final BufferedReader socketReader     = new BufferedReader(new InputStreamReader(socketInputStream));
-	        final BufferedWriter socketWriter    = new BufferedWriter(new OutputStreamWriter(socketOutputStream));
-	    ){
+	    try {
 		boolean handshakeCompleted = false;
 		List<String> strings = new ArrayList<>(); 
-		String line;
-		StringBuilder requestString = new StringBuilder(100);
-		byte[] request = new byte[1024];
-		int c;
-		while((c = socketInputStream.read()) != 1){
-		    System.out.print(c);
+                //final String requestString = readSocketChannel(socketChannel);
+                String requestString = "";
+	        try{
+		    requestString = readRequest(socketChannel);
+		}catch(IOException ex){
+		    ex.printStackTrace();
 		}
-		List<String> headerList = Arrays.asList(requestString.toString().split("\r\r"));
+		final String[] headers = requestString.toString().split("\r\n");
+		List<String> headerList = Arrays.asList(headers);
+
+		StringWriter socketWriter = new StringWriter(100);
 		if(!headerList.isEmpty()){
 		    String webSocketKey = headerList.stream().filter(str -> str.startsWith("Sec-WebSocket-Key")).findFirst().get().trim();
+		    webSocketKey = webSocketKey.split(":")[1].trim();
 		    socketWriter.write("HTTP/1.1 101 Switching Protocols");
 		    socketWriter.write("\r\n");
                     socketWriter.write("Upgrade: websocket");
@@ -80,24 +147,38 @@ public class SocketServer{
                     socketWriter.write("Sec-WebSocket-Accept:" + webSocketKey);
 		    socketWriter.write("\r\n");
 		    socketWriter.write("\r\n");
-		    System.out.println("handshake completed");
 		    socketWriter.flush();
+		    socketChannel.write(ByteBuffer.wrap(socketWriter.toString().getBytes()));
+		    System.out.println("handshake completed");
 		}
-		line = null;
-	        socketWriter.write("hello");
-		socketWriter.write("\r\n");
-		socketWriter.flush();
+	        socketWriter = null; 
+		while(socketChannel.isConnected()){
+			try{
+			       Thread.sleep(100);
+			       writeResponse(socketChannel, Arrays.asList("hi"));
+		               final String strValue = readRequest(socketChannel);
+			       System.out.println("from client " + strValue);
+		               if(!strValue.trim().isEmpty()){
+			           writeResponse(socketChannel, Arrays.asList("hi"));
+		                }
+			   }catch(IOException | InterruptedException ex){
+			       ex.printStackTrace();
+			   }
+		}
 	    }catch(IOException ex){
 	        ex.printStackTrace();
 	    }
 	}
     }
     public static void main(final String ... args) throws IOException{
-	final SocketServer obj = new SocketServer();
-        final ServerSocket server = new ServerSocket(9000, 10, InetAddress.getLoopbackAddress());
-        
+        final SocketServer obj = new SocketServer();
+	final ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
+        serverSocketChannel.bind(new InetSocketAddress(InetAddress.getLoopbackAddress(), 9000));
+        final List<SocketChannel> listOfSocket = new ArrayList<>(); 
 	while(true){
-	    new Thread(obj.new SocketHandler(server.accept())).start();  
+	    final SocketChannel socketChannel = serverSocketChannel.accept();
+	    listOfSocket.add(socketChannel);
+	    new Thread(obj.new SocketHandler(socketChannel)).start();  
 	}
     }
 }
