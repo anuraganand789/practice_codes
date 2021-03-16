@@ -14,7 +14,7 @@ public class PluginBasic implements Plugin {
     }
 
     @Override
-    public String getName() { return this.class.getName() ; } 
+    public String getName() { return this.getClass().getName() ; } 
 
     @Override
     public void init(final JavacTask javaCTask, String ... args){
