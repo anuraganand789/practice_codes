@@ -15,3 +15,9 @@ public class EmployeeTest{
 	emf.close();
     }
 }
+
+@Entity
+public class Employee{
+    @Basic(fetch=FetchType.LAZY)
+    @Column(name="column")
+}
