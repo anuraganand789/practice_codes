@@ -23,16 +23,10 @@ import javafx.scene.input.MouseDragEvent;
 import javafx.scene.input.MouseEvent;
 
 public class ColorEffect extends Application{
-
-    private ColorAdjust getEffect(double hue, 
-                                  double saturation, 
-                                  double lightness, 
-                                  double contrast){
-        return new ColorAdjust(hue, saturation, lightness, contrast);
-    }
     
     @Override
     public void start(final Stage stage){
+        final ColorAdjust colorAdjust = new ColorAdjust(0.0, 0.0, 0.0, 0.0);
         
         final String imageLocation = "file:/home/anuraganand/Pictures/RamJeehanumanJee.jpeg";
         final ImageView imageView = new ImageView(imageLocation);
@@ -40,6 +34,7 @@ public class ColorEffect extends Application{
         imageView.setY(30);
         imageView.setFitWidth(500);
         imageView.setPreserveRatio(true);
+        imageView.setEffect(colorAdjust);
 
         final Label  labelLightness  = new Label("Lightness");
         final Slider sliderLightness = new Slider(-1, 1, 0.2);
@@ -69,31 +64,15 @@ public class ColorEffect extends Application{
 
         final HBox hboxSaturation = new HBox(8, labelSaturation, sliderSaturation);
 
-        final VBox vbox = new VBox(10,hboxLightness, hboxContrast, hboxHue, hboxSaturation, imageView); 
+        final VBox vbox = new VBox(10, hboxLightness, hboxContrast, hboxHue, hboxSaturation, imageView); 
 
-        final Group group = new Group();
-        group.getChildren().addAll(vbox);
-
-        final EventHandler<? super MouseEvent> 
-        scrollEventHandler = (event) -> {
-            System.out.println("value changing");
-            imageView.setEffect(getEffect(
-                                          sliderHue.getValue(),
-                                          sliderSaturation.getValue(),
-                                          sliderLightness.getValue(), 
-                                          sliderContrast.getValue()
-                                         )
-                               );
-            
-        };
-
-        sliderHue.setOnMouseDragged(scrollEventHandler);
-        sliderContrast.setOnMouseDragged(scrollEventHandler);
-        sliderLightness.setOnMouseDragged(scrollEventHandler);
-        sliderSaturation.setOnMouseDragged(scrollEventHandler);
+        sliderHue        .setOnMouseDragged((event) -> colorAdjust.setHue(       sliderHue       .getValue()));
+        sliderContrast   .setOnMouseDragged((event) -> colorAdjust.setContrast(  sliderContrast  .getValue()));
+        sliderLightness  .setOnMouseDragged((event) -> colorAdjust.setBrightness(sliderLightness .getValue()));
+        sliderSaturation .setOnMouseDragged((event) -> colorAdjust.setSaturation(sliderSaturation.getValue()));
         
 
-        stage.setScene(new Scene(group, 700, 700));
+        stage.setScene(new Scene(new Group(vbox), 700, 700));
         stage.setTitle("The Image Modifier");
         stage.show();
     }
